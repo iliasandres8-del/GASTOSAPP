@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Mis Gastos</title>
+<link rel="manifest" href="mis_gastos_manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Mis Gastos">
+<meta name="theme-color" content="#1a1a1a">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='9' fill='%231a1a1a'/><rect x='6' y='13' width='24' height='14' rx='2.5' fill='none' stroke='%23fff' stroke-width='1.5'/><rect x='6' y='13' width='5' height='14' fill='%23333'/><rect x='25' y='13' width='5' height='14' fill='%23333'/><circle cx='18' cy='20' r='4' fill='none' stroke='%23fff' stroke-width='1.3'/><text x='18' y='23.5' text-anchor='middle' font-family='sans-serif' font-size='6' font-weight='600' fill='%23fff'>$</text></svg>">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; color: #1a1a1a; min-height: 100vh; padding-bottom: 48px; }
+
+/* SETUP */
+.setup-overlay { position: fixed; inset: 0; background: #f5f5f3; z-index: 9000; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.setup-card { background: #fff; border-radius: 18px; padding: 32px 24px; width: 100%; max-width: 400px; border: 1px solid #e8e8e5; }
+.setup-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
+.setup-title { font-size: 22px; font-weight: 600; }
+.setup-sub { font-size: 13px; color: #888; margin-top: 2px; }
+.setup-fields { display: flex; flex-direction: column; gap: 16px; }
+.setup-btn { margin-top: 8px; width: 100%; padding: 14px; background: #1a1a1a; color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 500; cursor: pointer; font-family: inherit; }
+
+/* APP */
+.app { max-width: 680px; margin: 0 auto; padding: 2rem 1rem; }
+.top-bar { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 12px; }
+.app-title { font-size: 22px; font-weight: 600; }
+.app-sub { font-size: 13px; color: #888; margin-top: 2px; }
+.top-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.month-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.tab { padding: 6px 16px; border-radius: 20px; border: 1px solid #d0d0cc; background: transparent; font-size: 13px; color: #666; cursor: pointer; font-family: inherit; }
+.tab.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+.settings-btn { width: 34px; height: 34px; border-radius: 50%; border: 1px solid #d0d0cc; background: transparent; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+
+/* SUMMARY */
+.summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+.metric { background: #efefec; border-radius: 10px; padding: 1rem; }
+.metric-label { font-size: 12px; color: #888; margin-bottom: 6px; }
+.metric-value { font-size: 20px; font-weight: 600; color: #1a1a1a; }
+.metric-value.income { color: #1a7a4a; }
+.metric-value.expense { color: #b03030; }
+.metric-value.pos { color: #1a7a4a; }
+.metric-value.neg { color: #b03030; }
+
+/* SECTIONS */
+.section { background: #fff; border: 1px solid #e8e8e5; border-radius: 14px; padding: 1.25rem; margin-bottom: 1rem; }
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.section-title { font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.08em; }
+.section-edit-btn { font-size: 12px; padding: 4px 10px; border-radius: 6px; border: 1px solid #d0d0cc; background: none; cursor: pointer; color: #666; font-family: inherit; }
+
+/* WEEKS */
+.week-block { padding: 12px 0; border-bottom: 1px solid #f0f0ed; }
+.week-block:last-child { border-bottom: none; }
+.week-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.week-label { font-size: 13px; color: #888; min-width: 75px; }
+.days-stepper { display: flex; align-items: center; gap: 6px; }
+.step-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid #d0d0cc; background: transparent; font-size: 17px; color: #555; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: inherit; }
+.days-val { width: 28px; text-align: center; font-size: 16px; font-weight: 600; }
+.week-income { font-size: 13px; font-weight: 600; color: #1a7a4a; }
+.week-daily { font-size: 11px; color: #aaa; text-align: right; }
+.pasaje-section { background: #f9f9f7; border-radius: 10px; padding: 10px 12px; }
+.pasaje-section-label { font-size: 11px; color: #aaa; margin-bottom: 8px; }
+.days-grid { display: flex; flex-direction: column; gap: 6px; }
+.day-pasaje-row { display: grid; grid-template-columns: 55px 1fr; align-items: center; gap: 8px; }
+.day-name { font-size: 12px; color: #888; }
+.pasaje-options { display: flex; gap: 5px; flex-wrap: wrap; }
+.pasaje-pill { padding: 4px 10px; border-radius: 20px; border: 1px solid #d0d0cc; background: transparent; font-size: 12px; color: #666; cursor: pointer; font-family: inherit; white-space: nowrap; }
+.pasaje-pill.sel { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+.week-pasaje-total { font-size: 12px; color: #b03030; text-align: right; margin-top: 6px; }
+
+/* INGRESOS ADICIONALES */
+.ingreso-form { display: grid; grid-template-columns: 1fr 120px auto; gap: 8px; margin-bottom: 14px; align-items: center; }
+.ingreso-form input[type=text] { padding: 9px 12px; border-radius: 8px; border: 1px solid #d0d0cc; font-size: 13px; font-family: inherit; outline: none; background: #f9f9f7; }
+.ingreso-form input[type=text]:focus { border-color: #999; background: #fff; }
+.ingreso-form input[type=number] { padding: 9px 10px; border-radius: 8px; border: 1px solid #d0d0cc; font-size: 13px; font-family: inherit; outline: none; background: #f9f9f7; text-align: right; }
+.ingreso-form input[type=number]:focus { border-color: #999; background: #fff; }
+.ingreso-add-btn { padding: 9px 14px; border-radius: 8px; border: none; background: #1a7a4a; color: #fff; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; white-space: nowrap; }
+.ing-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid #f5f5f3; gap: 8px; }
+.ing-row:last-child { border-bottom: none; }
+.ing-info { flex: 1; }
+.ing-nombre { font-size: 13px; font-weight: 500; color: #1a1a1a; }
+.ing-fecha { font-size: 11px; color: #bbb; margin-top: 1px; }
+.ing-monto { font-size: 14px; font-weight: 600; color: #1a7a4a; white-space: nowrap; }
+.ing-del { width: 26px; height: 26px; border-radius: 50%; border: 1px solid #e8e8e5; background: none; cursor: pointer; font-size: 13px; color: #ccc; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.ing-del:hover { border-color: #b03030; color: #b03030; }
+.salary-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #f9f9f7; border-radius: 8px; margin-bottom: 10px; }
+.salary-lbl { font-size: 13px; color: #666; }
+.salary-val { font-size: 14px; font-weight: 600; color: #1a7a4a; }
+
+/* GASTOS — REGISTRO */
+.gasto-form { display: grid; grid-template-columns: 1fr 120px auto; gap: 8px; margin-bottom: 14px; align-items: center; }
+.gasto-form input[type=text] { padding: 9px 12px; border-radius: 8px; border: 1px solid #d0d0cc; font-size: 13px; font-family: inherit; outline: none; background: #f9f9f7; }
+.gasto-form input[type=text]:focus { border-color: #999; background: #fff; }
+.gasto-form input[type=number] { padding: 9px 10px; border-radius: 8px; border: 1px solid #d0d0cc; font-size: 13px; font-family: inherit; outline: none; background: #f9f9f7; text-align: right; }
+.gasto-form input[type=number]:focus { border-color: #999; background: #fff; }
+.gasto-add-btn { padding: 9px 14px; border-radius: 8px; border: none; background: #1a1a1a; color: #fff; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; white-space: nowrap; }
+
+/* MOVIMIENTOS LIST */
+.movimientos { display: flex; flex-direction: column; gap: 0; }
+.mov-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid #f5f5f3; gap: 8px; }
+.mov-row:last-child { border-bottom: none; }
+.mov-info { flex: 1; }
+.mov-nombre { font-size: 13px; font-weight: 500; color: #1a1a1a; }
+.mov-fecha { font-size: 11px; color: #bbb; margin-top: 1px; }
+.mov-monto { font-size: 14px; font-weight: 600; color: #b03030; white-space: nowrap; }
+.mov-del { width: 26px; height: 26px; border-radius: 50%; border: 1px solid #e8e8e5; background: none; cursor: pointer; font-size: 13px; color: #ccc; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.mov-del:hover { border-color: #b03030; color: #b03030; }
+.sin-movimientos { font-size: 13px; color: #bbb; text-align: center; padding: 16px 0; }
+
+/* CATEGORÍAS FIJAS */
+.cat-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.cat-chip { padding: 4px 12px; border-radius: 20px; border: 1px solid #d0d0cc; background: transparent; font-size: 12px; color: #666; cursor: pointer; font-family: inherit; }
+.cat-chip.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+
+/* NOTES */
+.notes-area { width: 100%; min-height: 100px; border: 1px solid #e8e8e5; border-radius: 10px; padding: 12px; font-family: inherit; font-size: 14px; color: #1a1a1a; background: #f9f9f7; resize: vertical; outline: none; line-height: 1.6; }
+
+/* PROGRESS */
+.progress-bar-wrap { height: 6px; background: #efefec; border-radius: 999px; margin-top: 1.5rem; overflow: hidden; }
+.progress-bar { height: 100%; border-radius: 999px; transition: width 0.4s, background 0.3s; }
+.progress-label { display: flex; justify-content: space-between; font-size: 12px; color: #999; margin-top: 6px; }
+
+/* MODALS */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.modal { background: #fff; border-radius: 16px; width: 100%; max-width: 400px; max-height: 90vh; overflow-y: auto; border: 1px solid #e8e8e5; }
+.modal-hdr { padding: 20px 20px 0; }
+.modal-hdr-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.modal-title { font-size: 17px; font-weight: 600; }
+.modal-close { background: #f5f5f3; border: none; border-radius: 8px; width: 32px; height: 32px; cursor: pointer; font-size: 18px; color: #888; }
+.modal-divider { height: 1px; background: #f0f0ed; }
+.modal-body { padding: 16px 20px 22px; display: flex; flex-direction: column; gap: 14px; }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label { font-size: 12px; color: #666; font-weight: 500; }
+.field input { padding: 10px 12px; border-radius: 8px; border: 1px solid #d0d0cc; font-size: 14px; font-family: inherit; outline: none; background: #f9f9f7; }
+.field input:focus { border-color: #999; background: #fff; }
+.transport-item { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #f0f0ed; }
+.transport-item:last-child { border-bottom: none; }
+.transport-name { flex: 1; font-size: 14px; }
+.transport-cost { font-size: 13px; color: #888; }
+.transport-del { width: 26px; height: 26px; border-radius: 50%; border: 1px solid #e0e0e0; background: none; cursor: pointer; font-size: 13px; color: #ccc; display: flex; align-items: center; justify-content: center; }
+.transport-del:hover { border-color: #b03030; color: #b03030; }
+.add-transport-row { display: grid; grid-template-columns: 1fr 100px auto; gap: 8px; margin-top: 12px; }
+.add-transport-row input { padding: 8px 10px; border-radius: 8px; border: 1px solid #d0d0cc; font-size: 13px; font-family: inherit; outline: none; }
+.add-transport-row button { padding: 8px 12px; border-radius: 8px; border: none; background: #1a1a1a; color: #fff; cursor: pointer; font-size: 13px; font-family: inherit; }
+.modal-btns { display: flex; gap: 8px; }
+.btn-ghost { flex: 1; padding: 12px; border-radius: 10px; border: 1px solid #d0d0cc; background: none; font-size: 14px; cursor: pointer; color: #666; font-family: inherit; }
+.btn-primary { flex: 2; padding: 12px; border-radius: 10px; border: none; background: #1a1a1a; color: #fff; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; }
+
+@media (max-width: 500px) {
+  .summary-grid { grid-template-columns: 1fr 1fr; }
+  .gasto-form { grid-template-columns: 1fr 100px auto; }
+  .pasaje-pill { font-size: 11px; padding: 3px 8px; }
+}
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div class="setup-overlay" id="setupOverlay" style="display:none">
+  <div class="setup-card">
+    <div class="setup-logo">
+      <svg width="38" height="38" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+        <rect width="36" height="36" rx="9" fill="#1a1a1a"/>
+        <rect x="6" y="13" width="24" height="14" rx="2.5" fill="none" stroke="#fff" stroke-width="1.5"/>
+        <rect x="6" y="13" width="5" height="14" fill="#333"/>
+        <rect x="25" y="13" width="5" height="14" fill="#333"/>
+        <circle cx="18" cy="20" r="4" fill="none" stroke="#fff" stroke-width="1.3"/>
+        <text x="18" y="23.5" text-anchor="middle" font-family="sans-serif" font-size="6" font-weight="600" fill="#fff">$</text>
+      </svg>
+      <div>
+        <div class="setup-title">Mis Gastos</div>
+        <div class="setup-sub">Configura tu perfil para empezar</div>
+      </div>
+    </div>
+    <div class="setup-fields">
+      <div class="field"><label>Tu nombre</label><input type="text" id="setupNombre" placeholder="Ej: Juan"/></div>
+      <div class="field"><label>¿Cuánto ganas al mes?</label><input type="number" id="setupPago" placeholder="Ej: 2000000" min="0"/></div>
+      <button class="setup-btn" onclick="guardarSetup()">Comenzar →</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="appMain" style="display:none">
+  <div class="top-bar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+        <rect width="36" height="36" rx="9" fill="#1a1a1a"/>
+        <rect x="6" y="13" width="24" height="14" rx="2.5" fill="none" stroke="#fff" stroke-width="1.5"/>
+        <rect x="6" y="13" width="5" height="14" fill="#333"/>
+        <rect x="25" y="13" width="5" height="14" fill="#333"/>
+        <circle cx="18" cy="20" r="4" fill="none" stroke="#fff" stroke-width="1.3"/>
+        <text x="18" y="23.5" text-anchor="middle" font-family="sans-serif" font-size="6" font-weight="600" fill="#fff">$</text>
+      </svg>
+      <div>
+        <div class="app-title" id="appTitleName">Mis Gastos</div>
+        <div class="app-sub">2025 · Mayo – Diciembre</div>
+      </div>
+    </div>
+    <div class="top-right">
+      <div class="month-tabs" id="monthTabs"></div>
+      <button class="settings-btn" onclick="abrirSettings()" title="Configuración">⚙️</button>
+    </div>
+  </div>
+
+  <div class="summary-grid">
+    <div class="metric"><div class="metric-label">Ingresos</div><div class="metric-value income" id="sumIncome">$0</div></div>
+    <div class="metric"><div class="metric-label">Gastos</div><div class="metric-value expense" id="sumExpense">$0</div></div>
+    <div class="metric"><div class="metric-label">Saldo</div><div class="metric-value" id="sumBalance">$0</div></div>
+  </div>
+
+  <!-- SEMANAS -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">Semanas — días y transporte</div>
+      <button class="section-edit-btn" onclick="abrirTransporte()">Editar transportes</button>
+    </div>
+    <div id="weeksContainer"></div>
+  </div>
+
+  <!-- INGRESOS -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">Ingresos del mes</div>
+    </div>
+    <!-- Salario fijo -->
+    <div class="salary-row">
+      <span class="salary-lbl">💼 Salario mensual</span>
+      <span class="salary-val" id="salaryDisplay">$0</span>
+    </div>
+    <!-- Ingresos adicionales -->
+    <div class="ingreso-form">
+      <input type="text" id="ingresoNombre" placeholder="Prima, inversión, bono..." />
+      <input type="number" id="ingresoMonto" placeholder="$0" min="0" />
+      <button class="ingreso-add-btn" onclick="registrarIngreso()">+ Ingreso</button>
+    </div>
+    <div id="ingresosList"></div>
+  </div>
+
+  <!-- GASTOS -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">Registro de gastos</div>
+    </div>
+    <!-- Categorías -->
+    <div class="cat-chips" id="catChips"></div>
+    <!-- Formulario -->
+    <div class="gasto-form">
+      <input type="text" id="gastoNombre" placeholder="Descripción del gasto" />
+      <input type="number" id="gastoMonto" placeholder="$0" min="0" />
+      <button class="gasto-add-btn" onclick="registrarGasto()">Registrar</button>
+    </div>
+    <!-- Lista movimientos -->
+    <div class="movimientos" id="movimientosList"></div>
+  </div>
+
+  <!-- NOTAS -->
+  <div class="section">
+    <div class="section-title" style="margin-bottom:10px">Notas</div>
+    <textarea class="notes-area" id="notasArea" placeholder="Escribe aquí tus notas..."></textarea>
+  </div>
+
+  <div>
+    <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="progress-label"><span>Gastos vs ingresos</span><span id="progressPct">0%</span></div>
+  </div>
+</div>
+
+<!-- MODAL SETTINGS -->
+<div class="overlay" id="overlaySettings" style="display:none">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-hdr-row"><div class="modal-title">Configuración</div><button class="modal-close" onclick="cerrarSettings()">×</button></div>
+      <div class="modal-divider"></div>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>Tu nombre</label><input type="text" id="sNombre"/></div>
+      <div class="field"><label>Salario mensual</label><input type="number" id="sPago" min="0"/></div>
+      <div class="modal-btns">
+        <button class="btn-ghost" onclick="cerrarSettings()">Cancelar</button>
+        <button class="btn-primary" onclick="guardarSettings()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TRANSPORTES -->
+<div class="overlay" id="overlayTransporte" style="display:none">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-hdr-row"><div class="modal-title">Tipos de transporte</div><button class="modal-close" onclick="cerrarTransporte()">×</button></div>
+      <div class="modal-divider"></div>
+    </div>
+    <div class="modal-body">
+      <div id="transporteList"></div>
+      <div class="add-transport-row">
+        <input type="text" id="newTransNombre" placeholder="Nombre (ej: Bus)"/>
+        <input type="number" id="newTransCosto" placeholder="Costo" min="0"/>
+        <button onclick="agregarTransporte()">+ Añadir</button>
+      </div>
+      <div class="modal-btns" style="margin-top:8px">
+        <button class="btn-primary" onclick="cerrarTransporte()">Listo</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const MONTHS = ["Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const DAY_NAMES = ["Día 1","Día 2","Día 3","Día 4","Día 5","Día 6","Día 7"];
+const STORE_KEY = "mis_gastos_v2";
+const DEFAULT_CATS = ["SALIDAS","NECESARIOS","CANCHAS","AHORRO","INCESARIOS"];
+const DEFAULT_TRANSPORTES = [
+  { id: "moto",    nombre: "Moto",         costo: 7000 },
+  { id: "transmi", nombre: "Transmilenio", costo: 3700 },
+  { id: "gratis",  nombre: "Me ahorré",    costo: 0 },
+];
+
+function makeDefaultMonth() {
+  return {
+    weeks: [
+      {days:4, pasajes:Array(4).fill(null)},
+      {days:4, pasajes:Array(4).fill(null)},
+      {days:4, pasajes:Array(4).fill(null)},
+      {days:4, pasajes:Array(4).fill(null)},
+    ],
+    movimientos: [],
+    ingresos: [],   // [{id, nombre, monto, fecha}]
+    notes: ""
+  };
+}
+
+function cargar() {
+  try { const s = localStorage.getItem(STORE_KEY); return s ? JSON.parse(s) : null; } catch { return null; }
+}
+function guardar() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify({perfil, transportes, state, currentMonth})); } catch {}
+}
+
+let perfil, transportes, state, currentMonth;
+let catActiva = null; // null = todas
+
+function fmt(n) { return "$" + Math.round(n).toLocaleString("es-CO"); }
+function fechaHoy() {
+  const d = new Date();
+  return d.getDate() + "/" + (d.getMonth()+1) + "/" + d.getFullYear() + " " + d.getHours().toString().padStart(2,"0") + ":" + d.getMinutes().toString().padStart(2,"0");
+}
+
+function weekPasajeCost(week) {
+  return week.pasajes.reduce((s, tid) => {
+    if (!tid) return s;
+    const t = transportes.find(x => x.id === tid);
+    return s + (t ? t.costo : 0);
+  }, 0);
+}
+
+// ——— SETUP ———
+function mostrarSetup() {
+  document.getElementById("setupOverlay").style.display = "flex";
+  document.getElementById("appMain").style.display = "none";
+}
+function guardarSetup() {
+  const nombre = document.getElementById("setupNombre").value.trim();
+  const pago = parseFloat(document.getElementById("setupPago").value) || 0;
+  if (!nombre) { alert("Pon tu nombre para continuar."); return; }
+  if (!pago) { alert("Pon cuánto ganas al mes."); return; }
+  perfil = { nombre, pago };
+  transportes = JSON.parse(JSON.stringify(DEFAULT_TRANSPORTES));
+  state = MONTHS.map(() => makeDefaultMonth());
+  currentMonth = 0;
+  guardar();
+  iniciarApp();
+}
+
+// ——— INIT ———
+function iniciarApp() {
+  document.getElementById("setupOverlay").style.display = "none";
+  document.getElementById("appMain").style.display = "block";
+  document.getElementById("appTitleName").textContent = perfil.nombre + "'s Gastos";
+  render();
+}
+
+// ——— SETTINGS ———
+function abrirSettings() {
+  document.getElementById("sNombre").value = perfil.nombre;
+  document.getElementById("sPago").value = perfil.pago;
+  document.getElementById("overlaySettings").style.display = "flex";
+}
+function cerrarSettings() { document.getElementById("overlaySettings").style.display = "none"; }
+function guardarSettings() {
+  const nombre = document.getElementById("sNombre").value.trim();
+  const pago = parseFloat(document.getElementById("sPago").value) || perfil.pago;
+  if (!nombre) return;
+  perfil = { nombre, pago };
+  document.getElementById("appTitleName").textContent = nombre + "'s Gastos";
+  guardar(); cerrarSettings(); render();
+}
+
+// ——— TRANSPORTES ———
+function abrirTransporte() { renderTransporteList(); document.getElementById("overlayTransporte").style.display = "flex"; }
+function cerrarTransporte() { document.getElementById("overlayTransporte").style.display = "none"; guardar(); renderWeeks(); updateSummary(); }
+function renderTransporteList() {
+  const c = document.getElementById("transporteList");
+  if (!transportes.length) { c.innerHTML = `<p style="font-size:13px;color:#bbb;padding:8px 0">Sin transportes aún.</p>`; return; }
+  c.innerHTML = transportes.map((t,i) => `
+    <div class="transport-item">
+      <span class="transport-name">${t.nombre}</span>
+      <span class="transport-cost">${fmt(t.costo)}</span>
+      <button class="transport-del" onclick="eliminarTransporte(${i})">×</button>
+    </div>`).join("");
+}
+function agregarTransporte() {
+  const nombre = document.getElementById("newTransNombre").value.trim();
+  const costo = parseFloat(document.getElementById("newTransCosto").value) || 0;
+  if (!nombre) return;
+  transportes.push({ id: "t_"+Date.now(), nombre, costo });
+  document.getElementById("newTransNombre").value = "";
+  document.getElementById("newTransCosto").value = "";
+  renderTransporteList();
+}
+function eliminarTransporte(i) { transportes.splice(i,1); renderTransporteList(); }
+
+// ——— INGRESOS ADICIONALES ———
+function registrarIngreso() {
+  const nombre = document.getElementById("ingresoNombre").value.trim();
+  const monto = parseFloat(document.getElementById("ingresoMonto").value) || 0;
+  if (!nombre) { document.getElementById("ingresoNombre").focus(); return; }
+  if (!monto) { document.getElementById("ingresoMonto").focus(); return; }
+  if (!state[currentMonth].ingresos) state[currentMonth].ingresos = [];
+  state[currentMonth].ingresos.push({ id: Date.now(), nombre, monto, fecha: fechaHoy() });
+  document.getElementById("ingresoNombre").value = "";
+  document.getElementById("ingresoMonto").value = "";
+  guardar();
+  renderIngresos();
+  updateSummary();
+}
+function eliminarIngreso(id) {
+  state[currentMonth].ingresos = (state[currentMonth].ingresos || []).filter(i => i.id !== id);
+  guardar(); renderIngresos(); updateSummary();
+}
+function renderIngresos() {
+  document.getElementById("salaryDisplay").textContent = fmt(perfil.pago);
+  const lista = document.getElementById("ingresosList");
+  const ingresos = state[currentMonth].ingresos || [];
+  if (!ingresos.length) { lista.innerHTML = ""; return; }
+  lista.innerHTML = ingresos.slice().reverse().map(i => `
+    <div class="ing-row">
+      <div class="ing-info">
+        <div class="ing-nombre">${i.nombre}</div>
+        <div class="ing-fecha">${i.fecha}</div>
+      </div>
+      <div class="ing-monto">+${fmt(i.monto)}</div>
+      <button class="ing-del" onclick="eliminarIngreso(${i.id})">×</button>
+    </div>`).join("");
+}
+
+// ——— GASTOS ———
+function renderCatChips() {
+  const c = document.getElementById("catChips");
+  const todas = [null, ...DEFAULT_CATS];
+  c.innerHTML = todas.map(cat => `
+    <button class="cat-chip${catActiva===cat?" active":""}" onclick="selCat(${cat===null?"null":"'"+cat+"'"})">
+      ${cat===null?"Todas":cat}
+    </button>`).join("");
+}
+
+function selCat(cat) {
+  catActiva = cat;
+  if (cat !== null) {
+    document.getElementById("gastoNombre").value = cat;
+  }
+  renderCatChips();
+}
+
+function registrarGasto() {
+  const nombre = document.getElementById("gastoNombre").value.trim();
+  const monto = parseFloat(document.getElementById("gastoMonto").value) || 0;
+  if (!nombre) { document.getElementById("gastoNombre").focus(); return; }
+  if (!monto) { document.getElementById("gastoMonto").focus(); return; }
+  state[currentMonth].movimientos.push({
+    id: Date.now(),
+    nombre,
+    monto,
+    fecha: fechaHoy(),
+  });
+  document.getElementById("gastoMonto").value = "";
+  document.getElementById("gastoNombre").value = catActiva || "";
+  guardar();
+  renderMovimientos();
+  updateSummary();
+}
+
+function eliminarMovimiento(id) {
+  state[currentMonth].movimientos = state[currentMonth].movimientos.filter(m => m.id !== id);
+  guardar();
+  renderMovimientos();
+  updateSummary();
+}
+
+function renderMovimientos() {
+  const lista = document.getElementById("movimientosList");
+  let movs = state[currentMonth].movimientos.slice().reverse();
+  if (catActiva) movs = movs.filter(m => m.nombre === catActiva);
+  if (!movs.length) {
+    lista.innerHTML = `<div class="sin-movimientos">${catActiva ? "Sin gastos en "+catActiva : "Aún no hay gastos este mes"}</div>`;
+    return;
+  }
+  lista.innerHTML = movs.map(m => `
+    <div class="mov-row">
+      <div class="mov-info">
+        <div class="mov-nombre">${m.nombre}</div>
+        <div class="mov-fecha">${m.fecha}</div>
+      </div>
+      <div class="mov-monto">−${fmt(m.monto)}</div>
+      <button class="mov-del" onclick="eliminarMovimiento(${m.id})">×</button>
+    </div>`).join("");
+}
+
+// ——— WEEKS ———
+function renderWeeks() {
+  const c = document.getElementById("weeksContainer");
+  c.innerHTML = "";
+  state[currentMonth].weeks.forEach((week, wi) => {
+    const income = week.days * perfil.pago;
+    const pasajeCost = weekPasajeCost(week);
+    const block = document.createElement("div");
+    block.className = "week-block";
+
+    const top = document.createElement("div");
+    top.className = "week-top";
+
+    const label = document.createElement("div");
+    label.className = "week-label";
+    label.textContent = "Semana " + (wi+1);
+
+    const stepper = document.createElement("div");
+    stepper.className = "days-stepper";
+    const minus = document.createElement("button");
+    minus.className = "step-btn"; minus.innerHTML = "&#8722;";
+    minus.onclick = () => {
+      const w = state[currentMonth].weeks[wi];
+      if (w.days > 1) { w.days--; w.pasajes = w.pasajes.slice(0,w.days); guardar(); renderWeeks(); updateSummary(); }
+    };
+    const dv = document.createElement("div");
+    dv.className = "days-val"; dv.textContent = week.days;
+    const plus = document.createElement("button");
+    plus.className = "step-btn"; plus.innerHTML = "&#43;";
+    plus.onclick = () => {
+      const w = state[currentMonth].weeks[wi];
+      if (w.days < 7) { w.days++; w.pasajes.push(null); guardar(); renderWeeks(); updateSummary(); }
+    };
+    stepper.appendChild(minus); stepper.appendChild(dv); stepper.appendChild(plus);
+
+    const incWrap = document.createElement("div");
+    incWrap.style.textAlign = "right";
+    incWrap.innerHTML = `<div style="font-size:12px;color:#aaa">${week.days} día${week.days!==1?"s":""} trabajado${week.days!==1?"s":""}</div>`;
+
+    top.appendChild(label); top.appendChild(stepper); top.appendChild(incWrap);
+    block.appendChild(top);
+
+    if (transportes.length > 0) {
+      const ps = document.createElement("div"); ps.className = "pasaje-section";
+      const pl = document.createElement("div"); pl.className = "pasaje-section-label"; pl.textContent = "Transporte por día";
+      ps.appendChild(pl);
+      const grid = document.createElement("div"); grid.className = "days-grid";
+
+      week.pasajes.forEach((tid, di) => {
+        const dr = document.createElement("div"); dr.className = "day-pasaje-row";
+        const dn = document.createElement("div"); dn.className = "day-name"; dn.textContent = DAY_NAMES[di];
+        const pills = document.createElement("div"); pills.className = "pasaje-options";
+
+        const ninguno = document.createElement("button");
+        ninguno.className = "pasaje-pill" + (!tid ? " sel" : "");
+        ninguno.textContent = "—";
+        ninguno.onclick = () => { state[currentMonth].weeks[wi].pasajes[di]=null; guardar(); renderWeeks(); updateSummary(); };
+        pills.appendChild(ninguno);
+
+        transportes.forEach(t => {
+          const pill = document.createElement("button");
+          pill.className = "pasaje-pill" + (tid===t.id ? " sel" : "");
+          pill.textContent = t.nombre + (t.costo > 0 ? " "+fmt(t.costo) : "");
+          pill.onclick = () => { state[currentMonth].weeks[wi].pasajes[di]=t.id; guardar(); renderWeeks(); updateSummary(); };
+          pills.appendChild(pill);
+        });
+
+        dr.appendChild(dn); dr.appendChild(pills); grid.appendChild(dr);
+      });
+      ps.appendChild(grid);
+      const pt = document.createElement("div"); pt.className = "week-pasaje-total";
+      pt.textContent = "Transporte semana: " + fmt(pasajeCost);
+      ps.appendChild(pt);
+      block.appendChild(ps);
+    }
+    c.appendChild(block);
+  });
+}
+
+// ——— SUMMARY ———
+function updateSummary() {
+  const totalPasajes = state[currentMonth].weeks.reduce((s,w) => s + weekPasajeCost(w), 0);
+  const totalMovs = state[currentMonth].movimientos.reduce((s,m) => s + m.monto, 0);
+  const totalExtras = (state[currentMonth].ingresos || []).reduce((s,i) => s + i.monto, 0);
+  const totalIncome = perfil.pago + totalExtras;
+  const totalExpense = totalPasajes + totalMovs;
+  const balance = totalIncome - totalExpense;
+  const pct = totalIncome > 0 ? Math.min(100, Math.round(totalExpense/totalIncome*100)) : 0;
+
+  document.getElementById("sumIncome").textContent = fmt(totalIncome);
+  document.getElementById("sumExpense").textContent = fmt(totalExpense);
+  const balEl = document.getElementById("sumBalance");
+  balEl.textContent = fmt(balance);
+  balEl.className = "metric-value " + (balance >= 0 ? "pos" : "neg");
+  const bar = document.getElementById("progressBar");
+  bar.style.width = pct+"%";
+  bar.style.background = pct > 90 ? "#b03030" : pct > 60 ? "#c17a10" : "#1a7a4a";
+  document.getElementById("progressPct").textContent = pct+"%";
+}
+
+// ——— TABS ———
+function renderTabs() {
+  const c = document.getElementById("monthTabs");
+  c.innerHTML = "";
+  MONTHS.forEach((m,i) => {
+    const b = document.createElement("button");
+    b.className = "tab" + (i===currentMonth?" active":"");
+    b.textContent = m;
+    b.onclick = () => { currentMonth=i; catActiva=null; guardar(); render(); };
+    c.appendChild(b);
+  });
+}
+
+// ——— NOTAS ———
+function renderNotas() {
+  const area = document.getElementById("notasArea");
+  area.value = state[currentMonth].notes || "";
+  area.oninput = () => { state[currentMonth].notes = area.value; guardar(); };
+}
+
+// ——— RENDER ———
+function render() {
+  renderTabs();
+  renderWeeks();
+  renderIngresos();
+  renderCatChips();
+  renderMovimientos();
+  renderNotas();
+  updateSummary();
+  if (catActiva) document.getElementById("gastoNombre").value = catActiva;
+}
+
+// ——— BOOT ———
+const data = cargar();
+if (!data) {
+  mostrarSetup();
+} else {
+  perfil = data.perfil;
+  transportes = data.transportes;
+  state = data.state;
+  currentMonth = data.currentMonth ?? 0;
+  iniciarApp();
+}
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => { navigator.serviceWorker.register("mis_gastos_sw.js"); });
+}
+</script>
+</body>
+</html>
