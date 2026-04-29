@@ -1,0 +1,22 @@
+{
+  "name": "Mis Gastos",
+  "short_name": "Mis Gastos",
+  "description": "Control personal de gastos e ingresos",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#f5f5f3",
+  "theme_color": "#1a1a1a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%231a1a1a'/><rect x='32' y='70' width='128' height='75' rx='13' fill='none' stroke='%23fff' stroke-width='8'/><rect x='32' y='70' width='27' height='75' fill='%23333'/><rect x='133' y='70' width='27' height='75' fill='%23333'/><circle cx='96' cy='107' r='21' fill='none' stroke='%23fff' stroke-width='7'/><text x='96' y='122' text-anchor='middle' font-family='sans-serif' font-size='28' font-weight='700' fill='%23fff'>$</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%231a1a1a'/><rect x='80' y='185' width='352' height='200' rx='35' fill='none' stroke='%23fff' stroke-width='20'/><rect x='80' y='185' width='72' height='200' fill='%23333'/><rect x='360' y='185' width='72' height='200' fill='%23333'/><circle cx='256' cy='285' r='56' fill='none' stroke='%23fff' stroke-width='18'/><text x='256' y='310' text-anchor='middle' font-family='sans-serif' font-size='72' font-weight='700' fill='%23fff'>$</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
